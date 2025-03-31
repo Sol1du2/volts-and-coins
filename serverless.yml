@@ -11,6 +11,13 @@ provider:
   memorySize: 256
   logRetentionInDays: 14
   timeout: 29
+  environment:
+    VOLTS_N_COINS_REDIS_URL: ${env:VOLTS_N_COINS_REDIS_URL, 'redis://localhost:6379'}
+    VOLTS_N_COINS_BLOCKCHAIN_BASE_URL: ${env:VOLTS_N_COINS_BLOCKCHAIN_BASE_URL,'https://blockchain.info'}
+
+    VOLTS_N_COINS_BLOCK_CACHE_INTERVAL_SECONDS: ${env:VOLTS_N_COINS_BLOCK_CACHE_INTERVAL_SECONDS, '5400'}
+
+    VOLTS_N_COINS_ENERGY_COST_PER_BYTE: ${env:VOLTS_N_COINS_ENERGY_COST_PER_BYTE, '4.56'}
 
 plugins:
   - serverless-esbuild
