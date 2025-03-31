@@ -3,6 +3,55 @@
 This is a prototype assignment that calculates the energy consumption of BTC blocks.
 Note: This is just an exercise for fun, the calculations are not to be taken seriously!
 
+## Queries
+### getBlockEnergy
+- Purpose:
+Fetches the energy consumption for each transaction in a specific block.
+
+- Arguments:
+  - blockHash (String!): The unique hash identifier of the block you want to inspect.
+
+- Returns:
+A list of Transaction objects. Each transaction includes:
+  - hash: The transaction's unique identifier.
+  - size: The size (in bytes) of the transaction.
+  - energyConsumed: The computed energy consumption for the transaction (calculated as size * 4.56).
+
+- Example:
+```graphql
+query {
+  getBlockEnergy(blockHash: "0000000000000000000abcdef...") {
+    hash
+    size
+    energyConsumed
+  }
+}
+```
+
+### getDailyEnergyConsumption
+- Purpose:
+Retrieves the aggregated energy consumption for each day over a specified number of past days.
+
+- Arguments:
+  - lastDays (Int!): The number of days (counting backwards from the current day) to aggregate energy consumption data for.
+
+- Returns:
+A list of EnergyConsumptionPerDay objects. Each object includes:
+  - startTime: A Unix timestamp (in milliseconds) marking the beginning of the day (UTC).
+  - endTime: The Unix timestamp marking the end of the day (UTC).
+  - totalEnergy: The total energy consumption (in kWh) aggregated for that day.
+
+- Example:
+```graphql
+query {
+  getDailyEnergyConsumption(lastDays: 7) {
+    startTime
+    endTime
+    totalEnergy
+  }
+}
+```
+
 ## Design considerations and limitations
 - Because each BTC block contains a lot of transactions the code is designed to work with a cache to alleviate repeated
 calls. Especially for requesting the consumption for an entire day this can not easily be done on fly without reaching
@@ -37,7 +86,7 @@ infinite growth of data, especially for very old data that is rarely fetched.
 be very important in a production environment.
 - The `blockchainService` that takes care of making the requests to the block chain API is quite simple and does not
 really validate the incoming data. Using something like `Zod` for schema validation would be a very good idea for
-production
+production.
 - While errors are caught and exceptions taken care of, the code mostly just logs issues. Adding a better error handling
 system would be necessary after the prototype phase. Especially with attempts to retry/etc. The system is not robust
 enough for weak connections, for example. This is all boilerplate that should be fairly simple to add in, hence why it
