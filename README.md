@@ -72,18 +72,17 @@ requested and is cached with missing transactions.
 ### Limitations
 - Requesting the total energy consumption in the past X days has the risk of containing some stale data (especially in
 intervals closer to the current date) due to the fact that for this request we **only fetch data from the cache**.
-This also means that, if the Cronjob fails we will have gaps in the data. Another side effect is that when the
+This also means that, if the Cronjob fails, we will have gaps in the data. Another side effect is that when the
 application starts, it's not really possible to get to get old data, since nothing will be cached. This decision was
 made for simplicity because requesting too many blocks has the potential of hitting rate limits very quickly. The focus
-was on the design of the program itself, not details. It is obvious that only relying on the cache is not possible for
-production. A potential strategy for improving this could be to parallelize the request of blocks, or even transactions
-within blocks. This should be fairly easy to implement with, for example, an utility like `p-limit` and then wrapping
-all the fetches in a `Promise.all`-like structure. This could be done when the missing data is too large and needs to be
-requested on the fly.
+was on the design of the program itself, not details. It's obvious that only relying on the cache is not viable for
+production. To make it easier to request higher intervals concurrency was introduced using `p-limit`. This spawns a task
+for each block request. This strategy could also be used to be able to fetch higher amounts of data on the fly so the
+data is less stale. It should be fairly easy to further improve the design with this.
 - There is no mechanism for TTL for cached data. In production something like that should be implemented to prevent
 infinite growth of data, especially for very old data that is rarely fetched.
 - Due to the nature of the exercise I decided not to implement tests and focus on the design itself. However that would
-be very important in a production environment.
+be very important in a production environment. A test first approach is very important for easy to maintain code.
 - The `blockchainService` that takes care of making the requests to the block chain API is quite simple and does not
 really validate the incoming data. Using something like `Zod` for schema validation would be a very good idea for
 production.
