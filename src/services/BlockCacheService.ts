@@ -41,6 +41,11 @@ export class BlockCacheService {
 
   /// Fetches all blocks in a certain interval, computes their energy, stores it
   /// and returns to total energy.
+  /// This function deliberately avoids fetching the cache in order to update
+  /// potentially stale entries.
+  /// TODO(joao): This could potentially be done a bit more elegantly by
+  /// having a way to tell how old the cache data is, for example. But that is
+  /// an exercise for another day :)
   async computeAndStoreBlocksForInterval(startTime: number, endTime: number): Promise<EnergyConsumptionPerInterval | null> {
     const blockHashes = await getBlockHashesForTimestamp(endTime);
 
@@ -54,8 +59,6 @@ export class BlockCacheService {
       await this.cacheStore.cacheBlock(block);
 
       const blockEnergy = block.transactions.reduce((sum, tx) => sum + tx.energyConsumed, 0);
-      console.debug(`xxx got block energy, consumed=${blockEnergy}`);
-
       totalEnergy += blockEnergy;
     }
 
