@@ -1,0 +1,68 @@
+import { IBlockCacheStore } from '../cache/IBlockCacheStore';
+import { getBlockHashesForTimestamp, getBlockByHash } from './blockchainService';
+import { EnergyConsumptionPerInterval } from '../models/EnergyConsumptionPerDay';
+
+export class BlockCacheService {
+  constructor(private cacheStore: IBlockCacheStore) {}
+
+  /// Tries to fetch a block from the cache. If it's not there it fetches it
+  /// from the blockchain.
+  async getBlock(hash: string) {
+    const cachedBlock = await this.cacheStore.getBlockByHash(hash);
+    if (cachedBlock) {
+      return cachedBlock;
+    }
+
+    const block = await getBlockByHash(hash);
+    await this.cacheStore.cacheBlock(block);
+
+    return block;
+  }
+
+  /// Fetches the total energy consumption of a specific interval.
+  /// At the moment this only uses the cache. It is assumed the cache is built
+  /// via a chron job every few hours. This can result in data that is not so
+  /// up-to-date. For simplicity, we accept this. But for production purposes
+  /// this would need to be improved.
+  async getEnergyConsumptionPerInterval(startTime: number, endTime: number): Promise<EnergyConsumptionPerInterval | null> {
+    // Retrieve all cached blocks in the interval.
+    const blocks = await this.cacheStore.getBlocksByTimeRange(startTime, endTime);
+    if (blocks.length === 0) {
+      return null;
+    }
+
+    // Sum energy consumption over all blocks.
+    const totalEnergy = blocks.reduce((totalBlock, block) =>
+      totalBlock + block.transactions.reduce((totalTx, tx) =>
+        totalTx + tx.energyConsumed, 0), 0);
+
+    return { startTime, endTime, totalEnergy };
+  }
+
+  /// Fetches all blocks in a certain interval, computes their energy, stores it
+  /// and returns to total energy.
+  async computeAndStoreBlocksForInterval(startTime: number, endTime: number): Promise<EnergyConsumptionPerInterval | null> {
+    const blockHashes = await getBlockHashesForTimestamp(endTime);
+
+    let totalEnergy = 0;
+    for (const blockHash of blockHashes) {
+      const block = await getBlockByHash(blockHash);
+      if (block.time < startTime) {
+        break;
+      }
+
+      await this.cacheStore.cacheBlock(block);
+
+      const blockEnergy = block.transactions.reduce((sum, tx) => sum + tx.energyConsumed, 0);
+      console.debug(`xxx got block energy, consumed=${blockEnergy}`);
+
+      totalEnergy += blockEnergy;
+    }
+
+    if (totalEnergy == 0) {
+      return null;
+    }
+
+    return { startTime, endTime, totalEnergy };
+  }
+}
