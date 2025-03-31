@@ -1,6 +1,9 @@
 import { IBlockCacheStore } from '../cache/IBlockCacheStore';
 import { getBlockSummariesForTimestamp, getBlockByHash } from './blockchainService';
 import { EnergyConsumptionPerInterval } from '../models/EnergyConsumptionPerDay';
+import config from '../config/config';
+
+import pLimit from 'p-limit';
 
 export class BlockCacheService {
   constructor(private cacheStore: IBlockCacheStore) {}
@@ -47,24 +50,28 @@ export class BlockCacheService {
   /// having a way to tell how old the cache data is, for example. But that is
   /// an exercise for another day :)
   async computeAndStoreBlocksForInterval(startTime: number, endTime: number): Promise<EnergyConsumptionPerInterval | null> {
-    let totalEnergy = 0;
-
     const blockSummaries = await getBlockSummariesForTimestamp(endTime);
-    for (const blockSummary of blockSummaries) {
-      if (blockSummary.time < startTime) {
-        break;
-      }
 
-      const block = await getBlockByHash(blockSummary.hash);
-      await this.cacheStore.cacheBlock(block);
+    // It seems the blockchain API sends the blocks ordered by time so stopping
+    // here is enough. This would have to be properly verified and tested
+    // before production though.
+    // If not, it would be trivial to make sure our service returns them
+    // ordered.
+    const index = blockSummaries.findIndex(blockSummary => blockSummary.time < startTime);
+    const summariesToProcess = index === -1 ? blockSummaries : blockSummaries.slice(0, index);
 
-      const blockEnergy = block.transactions.reduce((sum, tx) => sum + tx.energyConsumed, 0);
-      totalEnergy += blockEnergy;
-    }
+    const limit = pLimit(config.blockCacheMaxConcurrency);
+    const energyPromises = summariesToProcess.map((blockSummary) =>
+      limit(async () => {
+        const block = await getBlockByHash(blockSummary.hash);
+        await this.cacheStore.cacheBlock(block);
 
-    if (totalEnergy == 0) {
-      return null;
-    }
+        return block.transactions.reduce((sum, tx) => sum + tx.energyConsumed, 0);
+      })
+    );
+
+    const energyValues = await Promise.all(energyPromises);
+    const totalEnergy = energyValues.reduce((sum, energy) => sum + energy, 0);
 
     return { startTime, endTime, totalEnergy };
   }
