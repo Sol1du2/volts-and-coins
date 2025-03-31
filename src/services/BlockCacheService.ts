@@ -1,6 +1,6 @@
 import { IBlockCacheStore } from '../cache/IBlockCacheStore';
 import { getBlockSummariesForTimestamp, getBlockByHash } from './blockchainService';
-import { EnergyConsumptionPerInterval } from '../models/EnergyConsumptionPerDay';
+import { EnergyConsumptionPerInterval } from '../models/EnergyConsumptionPerInterval';
 import config from '../config/config';
 
 import pLimit from 'p-limit';

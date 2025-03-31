@@ -1,4 +1,4 @@
-import { EnergyConsumptionPerInterval } from "../models/EnergyConsumptionPerDay";
+import { EnergyConsumptionPerInterval } from "../models/EnergyConsumptionPerInterval";
 import { BlockCacheService } from '../services/BlockCacheService';
 import { RedisBlockCacheStore } from '../cache/RedisBlockCacheStore';
 import config from '../config/config';
