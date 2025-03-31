@@ -1,6 +1,5 @@
 import { Transaction, TransactionData, fromTransactionData } from './Transaction';
-
-const MILLISECONDS = 1000;
+import { MS_PER_SECOND } from '../constants/timeConstants';
 
 export interface Block {
   hash: string; // identifier
@@ -17,7 +16,7 @@ export type BlockData = {
 export function fromBlockData(blockData: BlockData): Block {
   return {
     hash: blockData.hash,
-    time: blockData.time * MILLISECONDS,
+    time: blockData.time * MS_PER_SECOND,
     transactions: blockData.tx.map((tx: TransactionData) => (
       fromTransactionData(tx)
     )),

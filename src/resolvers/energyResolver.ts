@@ -2,6 +2,7 @@ import { EnergyConsumptionPerInterval } from "../models/EnergyConsumptionPerDay"
 import { BlockCacheService } from '../services/BlockCacheService';
 import { RedisBlockCacheStore } from '../cache/RedisBlockCacheStore';
 import config from '../config/config';
+import { MS_PER_DAY } from '../constants/timeConstants';
 
 const redisCacheStore = new RedisBlockCacheStore(config.redisUrl);
 const blockCacheService = new BlockCacheService(redisCacheStore);
@@ -22,7 +23,7 @@ export async function getTotalEnergyConsumption(lastDays : number) {
     // to get data day by day. This can easily be improved later.
     const startUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - (lastDays - 1 - i)));
     const startTime = startUTC.getTime();
-    const endTime = startTime + 24 * 3600 * 1000 + 1;
+    const endTime = startTime + MS_PER_DAY + 1;
 
     try {
       const consumption = await blockCacheService.getEnergyConsumptionPerInterval(startTime, endTime);
