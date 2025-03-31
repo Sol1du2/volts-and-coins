@@ -1,5 +1,5 @@
 import { IBlockCacheStore } from '../cache/IBlockCacheStore';
-import { getBlockHashesForTimestamp, getBlockByHash } from './blockchainService';
+import { getBlockSummariesForTimestamp, getBlockByHash } from './blockchainService';
 import { EnergyConsumptionPerInterval } from '../models/EnergyConsumptionPerDay';
 
 export class BlockCacheService {
@@ -47,15 +47,15 @@ export class BlockCacheService {
   /// having a way to tell how old the cache data is, for example. But that is
   /// an exercise for another day :)
   async computeAndStoreBlocksForInterval(startTime: number, endTime: number): Promise<EnergyConsumptionPerInterval | null> {
-    const blockHashes = await getBlockHashesForTimestamp(endTime);
-
     let totalEnergy = 0;
-    for (const blockHash of blockHashes) {
-      const block = await getBlockByHash(blockHash);
-      if (block.time < startTime) {
+
+    const blockSummaries = await getBlockSummariesForTimestamp(endTime);
+    for (const blockSummary of blockSummaries) {
+      if (blockSummary.time < startTime) {
         break;
       }
 
+      const block = await getBlockByHash(blockSummary.hash);
       await this.cacheStore.cacheBlock(block);
 
       const blockEnergy = block.transactions.reduce((sum, tx) => sum + tx.energyConsumed, 0);

@@ -26,7 +26,8 @@ custom:
       pattern: ['src/**/*.ts']
     external:
       - redis
-  blockCacheCron: ${env:VOLTS_N_COINS_BLOCK_CACHE_CRON, 'cron(0 */3 * * ? *)'}
+  # This cron expression runs every hour by default.
+  blockCacheCron: ${env:VOLTS_N_COINS_BLOCK_CACHE_CRON, 'cron(0 * * * ? *)'}
 
 functions:
   graphql:
@@ -35,7 +36,6 @@ functions:
       - httpApi: '*'
   blockCache:
     handler: src/blockCacheHandler.handler
-    # This cron expression runs every 3 hours by default.
     events:
       - schedule:
           rate: ${self:custom.blockCacheCron}

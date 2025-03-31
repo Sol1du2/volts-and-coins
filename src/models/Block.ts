@@ -10,15 +10,21 @@ export interface Block {
 export type BlockData = {
   hash: string;
   time: number;
-  tx: TransactionData[];
+  tx?: TransactionData[];
 }
 
 export function fromBlockData(blockData: BlockData): Block {
-  return {
+  let block: Block = {
     hash: blockData.hash,
     time: blockData.time * MS_PER_SECOND,
-    transactions: blockData.tx.map((tx: TransactionData) => (
-      fromTransactionData(tx)
-    )),
+    transactions: [],
   };
+
+  if (blockData.tx !== undefined) {
+    block.transactions = blockData.tx.map((tx: TransactionData) => (
+      fromTransactionData(tx)
+    ));
+  }
+
+  return block
 }

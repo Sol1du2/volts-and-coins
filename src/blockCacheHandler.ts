@@ -1,14 +1,14 @@
 import { RedisBlockCacheStore } from './cache/RedisBlockCacheStore';
 import { BlockCacheService } from './services/BlockCacheService';
 import config from './config/config';
-import { MS_PER_HOUR } from './constants/timeConstants';
+import { MS_PER_SECOND } from './constants/timeConstants';
 
 export const handler = async (): Promise<void> => {
   const redisCacheStore = new RedisBlockCacheStore(config.redisUrl);
   const preAggregationService = new BlockCacheService(redisCacheStore);
 
   const now = new Date();
-  const startTime = now.getTime() - config.blockAutoCacheIntervalHours * MS_PER_HOUR;
+  const startTime = now.getTime() - config.blockCacheIntervalSeconds * MS_PER_SECOND;
   const endTime = now.getTime() - 1;
 
   try {

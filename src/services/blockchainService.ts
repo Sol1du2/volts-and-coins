@@ -15,18 +15,18 @@ export async function getBlockByHash(hash: string): Promise<Block> {
   }
 }
 
-/// Fetches the block hashes for in the last 24h of a given timestamp
+/// Fetches the block summaries for in the last 24h of a given timestamp
 /// (in milliseconds).
-/// Returns an array of block hashes (strings) which can then be used to fetch
-/// full block details.
-export async function getBlockHashesForTimestamp(timestamp: number): Promise<string[]> {
+/// Returns an array of blocks without the transactions which can then be used
+/// to fetch full block details.
+export async function getBlockSummariesForTimestamp(timestamp: number): Promise<Block[]> {
   try {
     const url = `${config.blockchainBaseUrl}/blocks/${timestamp}?format=json`;
     const response = await axios.get(url);
 
     const blockSummaries: { hash: string; time: number }[] = response.data;
 
-    return blockSummaries.map(summary => summary.hash);
+    return blockSummaries.map(summary => fromBlockData(summary));
   } catch (error) {
     console.error('error fetching block hashes for timestamp:', error);
     throw new Error('failed to fetch block hashes');
